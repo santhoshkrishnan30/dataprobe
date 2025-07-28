@@ -6,7 +6,7 @@
 
 ## 🎨 **NEW: Enterprise-Grade Visualizations**
 
-DataProbe v2.1.0 introduces professional-quality visualizations that rival commercial ETL monitoring tools like Airflow, Prefect, and Dagster.
+DataProbe v1.0.0 introduces professional-quality visualizations that rival commercial ETL monitoring tools like Airflow, Prefect, and Dagster.
 
 ### **Dashboard Features**
 

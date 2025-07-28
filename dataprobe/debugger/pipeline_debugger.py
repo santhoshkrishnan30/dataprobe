@@ -12,6 +12,8 @@ import json
 import pickle
 from pathlib import Path
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+from matplotlib.patches import FancyBboxPatch, Circle, Rectangle, Arrow, Ellipse
 import seaborn as sns
 import networkx as nx
 from rich.console import Console
@@ -27,6 +29,9 @@ import hashlib
 import sys
 import gc
 import numpy as np
+from matplotlib.gridspec import GridSpec
+import matplotlib.dates as mdates
+from matplotlib.animation import FuncAnimation
 
 # Initialize Rich console for beautiful output
 console = Console()
@@ -102,6 +107,22 @@ class PipelineDebugger:
         # Performance metrics
         self.bottlenecks: List[str] = []
         self.memory_peaks: List[Tuple[str, float]] = []
+        
+        # Enhanced color schemes for professional visualization
+        self.colors = {
+            'primary': '#1E3A8A',      # Deep blue
+            'secondary': '#10B981',    # Emerald green
+            'accent': '#F59E0B',       # Amber
+            'danger': '#EF4444',       # Red
+            'warning': '#F97316',      # Orange
+            'info': '#3B82F6',         # Blue
+            'success': '#22C55E',      # Green
+            'background': '#F8FAFC',   # Light gray
+            'dark_bg': '#0F172A',      # Dark blue
+            'text_primary': '#1F2937', # Dark gray
+            'text_secondary': '#6B7280', # Medium gray
+            'border': '#E5E7EB'        # Light border
+        }
         
         # Create save directory if needed
         if self.auto_save:
@@ -363,103 +384,613 @@ class PipelineDebugger:
                 )
         
         console.print(col_table)
-    
+
     def visualize_pipeline(self, save_path: Optional[Path] = None):
         """
-        Create a visual representation of the pipeline execution.
+        Create an enterprise-grade, professional dashboard visualization of the pipeline execution.
+        This creates a comprehensive visual report that rivals commercial ETL monitoring tools.
         """
-        # Create directed graph
+        # Set professional style
+        plt.style.use('default')
+        
+        # Create the main figure with professional layout
+        fig = plt.figure(figsize=(24, 16))
+        fig.patch.set_facecolor('#FAFBFC')
+        
+        # Create sophisticated grid layout
+        gs = GridSpec(4, 6, height_ratios=[0.8, 2.5, 1.5, 1.2], width_ratios=[1, 1, 1, 1, 1, 1],
+                     hspace=0.25, wspace=0.15, left=0.03, right=0.97, top=0.93, bottom=0.05)
+        
+        # ====================== HEADER SECTION ======================
+        self._create_header(fig, gs)
+        
+        # ====================== MAIN DASHBOARD PANELS ======================
+        self._create_kpi_dashboard(fig, gs)
+        self._create_pipeline_flowchart(fig, gs)
+        self._create_performance_analytics(fig, gs)
+        self._create_data_insights_panel(fig, gs)
+        
+        # ====================== SAVE AND DISPLAY ======================
+        save_file = save_path or (self.save_path / "enterprise_pipeline_dashboard.png")
+        plt.savefig(save_file, dpi=300, bbox_inches='tight', facecolor='#FAFBFC', 
+                   edgecolor='none', pad_inches=0.2)
+        
+        plt.show()
+        console.print(f"[green]✓ Enterprise pipeline dashboard saved to: {save_file}[/green]")
+        return str(save_file)
+
+    def _create_header(self, fig, gs):
+        """Create professional header with branding and key metrics"""
+        ax_header = fig.add_subplot(gs[0, :])
+        ax_header.axis('off')
+        
+        # Main title with professional styling
+        title_text = f"DataProbe Enterprise Analytics Dashboard"
+        subtitle_text = f"Pipeline: {self.name} | Generated: {datetime.now().strftime('%B %d, %Y at %H:%M')}"
+        
+        ax_header.text(0.02, 0.7, title_text, fontsize=26, fontweight='bold', 
+                      color=self.colors['primary'], transform=ax_header.transAxes)
+        ax_header.text(0.02, 0.3, subtitle_text, fontsize=14, color=self.colors['text_secondary'], 
+                      transform=ax_header.transAxes)
+        
+        # Status indicator
+        status_color = self.colors['danger'] if any(op.error for op in self.operations.values()) else self.colors['success']
+        status_text = "ISSUES DETECTED" if any(op.error for op in self.operations.values()) else "HEALTHY"
+        
+        # Status badge
+        bbox = dict(boxstyle="round,pad=0.3", facecolor=status_color, alpha=0.2, edgecolor=status_color, linewidth=2)
+        ax_header.text(0.85, 0.5, f"STATUS: {status_text}", fontsize=12, fontweight='bold',
+                      color=status_color, transform=ax_header.transAxes, 
+                      bbox=bbox, ha='center', va='center')
+
+    def _create_kpi_dashboard(self, fig, gs):
+        """Create KPI dashboard with key performance indicators"""
+        # Calculate KPIs
+        total_ops = len(self.operations)
+        successful_ops = sum(1 for op in self.operations.values() if not op.error)
+        failed_ops = total_ops - successful_ops
+        total_duration = sum(op.duration for op in self.operations.values())
+        total_memory = sum(op.memory_delta for op in self.operations.values())
+        avg_duration = total_duration / max(total_ops, 1)
+        
+        success_rate = (successful_ops / max(total_ops, 1)) * 100
+        
+        # KPI data
+        kpis = [
+            ("Total Operations", f"{total_ops}", self.colors['info'], "📊"),
+            ("Success Rate", f"{success_rate:.1f}%", self.colors['success'] if success_rate >= 95 else self.colors['warning'], "✅"),
+            ("Total Duration", f"{total_duration:.2f}s", self.colors['primary'], "⏱️"),
+            ("Memory Impact", f"{total_memory:+.1f}MB", self.colors['accent'], "💾"),
+            ("Avg. Op. Time", f"{avg_duration:.3f}s", self.colors['secondary'], "📈"),
+            ("Bottlenecks", f"{len(self.bottlenecks)}", self.colors['danger'] if self.bottlenecks else self.colors['success'], "🚨")
+        ]
+        
+        # Create KPI panels
+        for i, (label, value, color, icon) in enumerate(kpis):
+            ax_kpi = fig.add_subplot(gs[1, i])
+            ax_kpi.axis('off')
+            
+            # KPI box with modern design
+            box = FancyBboxPatch((0.05, 0.1), 0.9, 0.8, boxstyle="round,pad=0.02",
+                               facecolor=color, alpha=0.1, edgecolor=color, linewidth=2)
+            ax_kpi.add_patch(box)
+            
+            # Icon and value
+            ax_kpi.text(0.5, 0.75, icon, ha='center', va='center', fontsize=24, 
+                       transform=ax_kpi.transAxes)
+            ax_kpi.text(0.5, 0.45, value, ha='center', va='center', fontsize=20, 
+                       fontweight='bold', color=color, transform=ax_kpi.transAxes)
+            ax_kpi.text(0.5, 0.2, label, ha='center', va='center', fontsize=10, 
+                       color=self.colors['text_primary'], transform=ax_kpi.transAxes, wrap=True)
+
+    def _create_pipeline_flowchart(self, fig, gs):
+        """Create sophisticated pipeline flowchart"""
+        ax_flow = fig.add_subplot(gs[2, :4])
+        ax_flow.set_xlim(0, 100)
+        ax_flow.set_ylim(0, 100)
+        ax_flow.axis('off')
+        
+        # Title
+        ax_flow.text(50, 95, 'Pipeline Execution Flow', ha='center', va='center', 
+                    fontsize=16, fontweight='bold', color=self.colors['primary'])
+        
+        if not self.operations:
+            ax_flow.text(50, 50, 'No operations recorded', ha='center', va='center', 
+                        fontsize=14, color=self.colors['text_secondary'])
+            return
+        
+        # Calculate positions for operations
+        sorted_ops = sorted(self.operations.items(), key=lambda x: x[1].start_time)
+        n_ops = len(sorted_ops)
+        
+        # Create network graph for better positioning
         G = nx.DiGraph()
+        positions = {}
         
-        # Add nodes
-        for op_id, metrics in self.operations.items():
-            label = f"{metrics.operation_name}\n{metrics.duration:.3f}s"
-            color = 'red' if metrics.error else ('yellow' if op_id in self.bottlenecks else 'lightblue')
-            G.add_node(op_id, label=label, color=color)
+        # Add nodes and calculate positions
+        for i, (op_id, op) in enumerate(sorted_ops):
+            x = 10 + (i * 80 / max(n_ops - 1, 1))
+            
+            # Vary Y position based on performance characteristics
+            if op.error:
+                y = 25  # Errors at bottom
+            elif op_id in self.bottlenecks:
+                y = 45  # Bottlenecks in middle
+            else:
+                y = 65  # Normal operations on top
+                
+            # Add some randomness to avoid overlap
+            y += np.sin(i * 0.7) * 8
+            positions[op_id] = (x, y)
+            
+            G.add_node(op_id, pos=(x, y))
+            
+            # Add edges
+            if i > 0:
+                prev_op_id = sorted_ops[i-1][0]
+                G.add_edge(prev_op_id, op_id)
         
-        # Add edges
-        for op_id, metrics in self.operations.items():
-            for child_id in metrics.children_ids:
-                G.add_edge(op_id, child_id)
+        # Draw connections first
+        for edge in G.edges():
+            start_pos = positions[edge[0]]
+            end_pos = positions[edge[1]]
+            
+            # Create curved arrow
+            mid_x = (start_pos[0] + end_pos[0]) / 2
+            mid_y = max(start_pos[1], end_pos[1]) + 5
+            
+            # Draw curved line
+            x_vals = [start_pos[0] + 8, mid_x, end_pos[0] - 8]
+            y_vals = [start_pos[1], mid_y, end_pos[1]]
+            
+            ax_flow.plot(x_vals, y_vals, color=self.colors['info'], linewidth=2, alpha=0.7)
+            
+            # Arrow head
+            ax_flow.annotate('', xy=(end_pos[0] - 8, end_pos[1]), 
+                           xytext=(end_pos[0] - 12, end_pos[1]),
+                           arrowprops=dict(arrowstyle='->', lw=2, color=self.colors['info']))
         
-        # Create visualization
-        plt.figure(figsize=(12, 8))
-        pos = nx.spring_layout(G)
+        # Draw operation nodes
+        for op_id, (x, y) in positions.items():
+            op = self.operations[op_id]
+            
+            # Determine node style
+            if op.error:
+                node_color = self.colors['danger']
+                edge_color = '#B91C1C'
+                icon = '❌'
+            elif op_id in self.bottlenecks:
+                node_color = self.colors['warning']
+                edge_color = '#D97706'
+                icon = '⚠️'
+            else:
+                node_color = self.colors['success']
+                edge_color = '#059669'
+                icon = '✅'
+            
+            # Main node circle
+            circle = Circle((x, y), 7, facecolor=node_color, edgecolor=edge_color, 
+                          linewidth=2, alpha=0.9, zorder=3)
+            ax_flow.add_patch(circle)
+            
+            # Operation name (shortened)
+            op_name = op.operation_name
+            if len(op_name) > 12:
+                op_name = op_name[:12] + "..."
+            
+            ax_flow.text(x, y + 12, op_name, ha='center', va='center', fontsize=8, 
+                        fontweight='bold', color=self.colors['text_primary'])
+            
+            # Performance metrics below
+            ax_flow.text(x, y - 12, f"{op.duration:.3f}s", ha='center', va='center', 
+                        fontsize=7, color=self.colors['text_secondary'])
+            
+            # Status icon
+            ax_flow.text(x, y, icon, ha='center', va='center', fontsize=10, zorder=4)
+
+    def _create_performance_analytics(self, fig, gs):
+        """Create performance analytics section"""
+        # Memory usage timeline
+        ax_memory = fig.add_subplot(gs[2, 4:])
+        
+        if self.operations:
+            sorted_ops = sorted(self.operations.items(), key=lambda x: x[1].start_time)
+            
+            # Calculate cumulative memory
+            memory_timeline = []
+            cumulative_memory = 0
+            labels = []
+            
+            for i, (op_id, op) in enumerate(sorted_ops):
+                cumulative_memory += op.memory_delta
+                memory_timeline.append(cumulative_memory)
+                labels.append(op.operation_name[:8] + "..." if len(op.operation_name) > 8 else op.operation_name)
+            
+            x_pos = range(len(memory_timeline))
+            
+            # Create gradient fill
+            ax_memory.fill_between(x_pos, 0, memory_timeline, alpha=0.3, color=self.colors['accent'])
+            ax_memory.plot(x_pos, memory_timeline, color=self.colors['accent'], linewidth=3, 
+                          marker='o', markersize=6, markerfacecolor='white', markeredgecolor=self.colors['accent'], 
+                          markeredgewidth=2)
+            
+            # Highlight memory peaks
+            for i, (op_id, memory_delta) in enumerate(self.memory_peaks):
+                if op_id in dict(sorted_ops):
+                    idx = [id for id, _ in sorted_ops].index(op_id)
+                    ax_memory.scatter(idx, memory_timeline[idx], color=self.colors['danger'], 
+                                    s=100, zorder=5, edgecolor='white', linewidth=2)
+                    ax_memory.annotate(f'+{memory_delta:.1f}MB', 
+                                     xy=(idx, memory_timeline[idx]),
+                                     xytext=(5, 10), textcoords='offset points',
+                                     fontsize=8, color=self.colors['danger'],
+                                     bbox=dict(boxstyle="round,pad=0.2", facecolor='white', 
+                                             edgecolor=self.colors['danger'], alpha=0.8))
+            
+            ax_memory.set_title('Memory Usage Timeline', fontsize=12, fontweight='bold', 
+                              color=self.colors['primary'], pad=10)
+            ax_memory.set_xlabel('Operations', fontsize=10, color=self.colors['text_primary'])
+            ax_memory.set_ylabel('Cumulative Memory (MB)', fontsize=10, color=self.colors['text_primary'])
+            ax_memory.grid(True, alpha=0.3, linestyle='--')
+            ax_memory.set_facecolor('#FAFBFC')
+            
+            # Style the plot
+            ax_memory.spines['top'].set_visible(False)
+            ax_memory.spines['right'].set_visible(False)
+            ax_memory.spines['left'].set_color(self.colors['border'])
+            ax_memory.spines['bottom'].set_color(self.colors['border'])
+
+    def _create_data_insights_panel(self, fig, gs):
+        """Create data insights and lineage panel"""
+        # Data lineage summary
+        ax_lineage = fig.add_subplot(gs[3, :3])
+        ax_lineage.axis('off')
+        
+        # Background panel
+        panel_bg = FancyBboxPatch((0.02, 0.1), 0.96, 0.8, boxstyle="round,pad=0.02",
+                                facecolor=self.colors['info'], alpha=0.05, 
+                                edgecolor=self.colors['info'], linewidth=1)
+        ax_lineage.add_patch(panel_bg)
+        
+        ax_lineage.text(0.05, 0.8, 'Data Lineage & Insights', fontsize=14, fontweight='bold',
+                       color=self.colors['primary'], transform=ax_lineage.transAxes)
+        
+        # Lineage statistics
+        lineage_count = len(self.data_lineages)
+        transform_count = sum(len(l.transformations) for l in self.data_lineages.values())
+        
+        insights = [
+            f"📊 {lineage_count} data objects tracked",
+            f"🔄 {transform_count} transformations recorded",
+            f"⚡ {len(self.operation_order)} operations executed",
+            f"🎯 {len([op for op in self.operations.values() if not op.error])} successful operations"
+        ]
+        
+        for i, insight in enumerate(insights):
+            ax_lineage.text(0.05, 0.6 - i*0.12, insight, fontsize=11, 
+                           color=self.colors['text_primary'], transform=ax_lineage.transAxes)
+        
+        # Performance insights panel
+        ax_insights = fig.add_subplot(gs[3, 3:])
+        ax_insights.axis('off')
+        
+        # Background panel
+        panel_bg2 = FancyBboxPatch((0.02, 0.1), 0.96, 0.8, boxstyle="round,pad=0.02",
+                                 facecolor=self.colors['success'], alpha=0.05, 
+                                 edgecolor=self.colors['success'], linewidth=1)
+        ax_insights.add_patch(panel_bg2)
+        
+        ax_insights.text(0.05, 0.8, 'Performance Insights', fontsize=14, fontweight='bold',
+                        color=self.colors['primary'], transform=ax_insights.transAxes)
+        
+        # Generate insights
+        total_duration = sum(op.duration for op in self.operations.values())
+        avg_duration = total_duration / max(len(self.operations), 1)
+        
+        perf_insights = []
+        
+        if self.bottlenecks:
+            slowest_op = max(self.operations.values(), key=lambda x: x.duration)
+            perf_insights.append(f"🐌 Slowest: {slowest_op.operation_name} ({slowest_op.duration:.2f}s)")
+        else:
+            perf_insights.append("🚀 No bottlenecks detected")
+        
+        if self.memory_peaks:
+            highest_mem = max(self.memory_peaks, key=lambda x: x[1])
+            op_name = self.operations[highest_mem[0]].operation_name
+            perf_insights.append(f"💾 Peak memory: {op_name} (+{highest_mem[1]:.1f}MB)")
+        else:
+            perf_insights.append("✅ Memory usage within limits")
+        
+        perf_insights.append(f"⏱️ Average operation time: {avg_duration:.3f}s")
+        
+        error_count = sum(1 for op in self.operations.values() if op.error)
+        if error_count > 0:
+            perf_insights.append(f"❌ {error_count} operations failed")
+        else:
+            perf_insights.append("✅ All operations completed successfully")
+        
+        for i, insight in enumerate(perf_insights):
+            ax_insights.text(0.05, 0.6 - i*0.12, insight, fontsize=11, 
+                           color=self.colors['text_primary'], transform=ax_insights.transAxes)
+
+    def create_3d_pipeline_visualization(self, save_path: Optional[Path] = None):
+        """Create an advanced 3D visualization of the pipeline network"""
+        fig = plt.figure(figsize=(16, 12))
+        ax = fig.add_subplot(111, projection='3d')
+        
+        # Set background
+        ax.xaxis.pane.fill = False
+        ax.yaxis.pane.fill = False
+        ax.zaxis.pane.fill = False
+        ax.grid(False)
+        
+        if not self.operations:
+            ax.text(0.5, 0.5, 0.5, 'No operations to visualize', 
+                   transform=ax.transAxes, fontsize=16, ha='center')
+            return
+        
+        # Create network graph
+        G = nx.DiGraph()
+        sorted_ops = sorted(self.operations.items(), key=lambda x: x[1].start_time)
+        
+        # Add nodes and edges
+        for i, (op_id, op) in enumerate(sorted_ops):
+            G.add_node(op_id, operation=op)
+            if i > 0:
+                prev_op_id = sorted_ops[i-1][0]
+                G.add_edge(prev_op_id, op_id)
+        
+        # Calculate 3D positions
+        pos_2d = nx.spring_layout(G, k=3, iterations=50)
+        pos_3d = {}
+        
+        for i, (op_id, op) in enumerate(sorted_ops):
+            if op_id in pos_2d:
+                x, y = pos_2d[op_id]
+                # Z-axis represents performance metrics
+                z = op.duration * 10  # Scale duration for visibility
+                pos_3d[op_id] = (x * 10, y * 10, z)
         
         # Draw nodes
-        node_colors = [G.nodes[node].get('color', 'lightblue') for node in G.nodes()]
-        nx.draw_networkx_nodes(G, pos, node_color=node_colors, node_size=3000, alpha=0.8)
+        for op_id, (x, y, z) in pos_3d.items():
+            op = self.operations[op_id]
+            
+            # Determine color and size based on status
+            if op.error:
+                color = self.colors['danger']
+                size = 200
+            elif op_id in self.bottlenecks:
+                color = self.colors['warning']
+                size = 150
+            else:
+                color = self.colors['success']
+                size = 100
+            
+            # Memory usage affects alpha
+            alpha = min(1.0, 0.3 + abs(op.memory_delta) / 50)
+            
+            ax.scatter(x, y, z, c=color, s=size, alpha=alpha, edgecolors='white', linewidth=2)
+            
+            # Add labels
+            ax.text(x, y, z + 0.5, op.operation_name[:10], fontsize=8, ha='center')
         
         # Draw edges
-        nx.draw_networkx_edges(G, pos, edge_color='gray', alpha=0.5, arrowsize=20)
+        for edge in G.edges():
+            if edge[0] in pos_3d and edge[1] in pos_3d:
+                x1, y1, z1 = pos_3d[edge[0]]
+                x2, y2, z2 = pos_3d[edge[1]]
+                ax.plot([x1, x2], [y1, y2], [z1, z2], 
+                       color=self.colors['info'], linewidth=2, alpha=0.6)
         
-        # Draw labels
-        labels = nx.get_node_attributes(G, 'label')
-        nx.draw_networkx_labels(G, pos, labels, font_size=8)
+        # Styling
+        ax.set_xlabel('Network Flow →', fontsize=12, color=self.colors['primary'])
+        ax.set_ylabel('Complexity →', fontsize=12, color=self.colors['primary'])
+        ax.set_zlabel('Performance (Duration) →', fontsize=12, color=self.colors['primary'])
+        ax.set_title(f'3D Pipeline Network: {self.name}', fontsize=16, 
+                    color=self.colors['primary'], fontweight='bold', pad=20)
         
-        plt.title(f"Pipeline Execution Flow: {self.name}")
-        plt.axis('off')
+        # Add legend
+        legend_elements = [
+            plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=self.colors['success'], 
+                      markersize=10, label='Successful Operation'),
+            plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=self.colors['warning'], 
+                      markersize=10, label='Performance Bottleneck'),
+            plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=self.colors['danger'], 
+                      markersize=10, label='Failed Operation')
+        ]
+        ax.legend(handles=legend_elements, loc='upper left', bbox_to_anchor=(0, 1))
         
-        if save_path:
-            plt.savefig(save_path, dpi=300, bbox_inches='tight')
+        # Save
+        save_file = save_path or (self.save_path / "pipeline_3d_network.png")
+        plt.savefig(save_file, dpi=300, bbox_inches='tight', facecolor='white')
+        plt.show()
+        
+        console.print(f"[green]✓ 3D pipeline network saved to: {save_file}[/green]")
+        return str(save_file)
+
+    def generate_executive_report(self, save_path: Optional[Path] = None):
+        """Generate an executive-level visual report"""
+        # Create multi-page report
+        fig = plt.figure(figsize=(16, 20))
+        fig.patch.set_facecolor('white')
+        
+        # Create sections
+        gs = GridSpec(6, 2, height_ratios=[0.5, 1.5, 1.5, 1.5, 1.5, 0.5], 
+                     hspace=0.3, wspace=0.2)
+        
+        # Header
+        ax_header = fig.add_subplot(gs[0, :])
+        ax_header.axis('off')
+        
+        # Executive header
+        header_bg = FancyBboxPatch((0.02, 0.1), 0.96, 0.8, boxstyle="round,pad=0.02",
+                                 facecolor=self.colors['primary'], alpha=0.1, 
+                                 edgecolor=self.colors['primary'], linewidth=2)
+        ax_header.add_patch(header_bg)
+        
+        ax_header.text(0.5, 0.6, f'Executive Pipeline Report: {self.name}', 
+                      ha='center', va='center', fontsize=24, fontweight='bold', 
+                      color=self.colors['primary'], transform=ax_header.transAxes)
+        ax_header.text(0.5, 0.3, f'Generated on {datetime.now().strftime("%B %d, %Y")}', 
+                      ha='center', va='center', fontsize=12, 
+                      color=self.colors['text_secondary'], transform=ax_header.transAxes)
+        
+        # Executive Summary Section
+        ax_summary = fig.add_subplot(gs[1, :])
+        ax_summary.axis('off')
+        
+        # Calculate executive metrics
+        total_ops = len(self.operations)
+        success_rate = (sum(1 for op in self.operations.values() if not op.error) / max(total_ops, 1)) * 100
+        total_duration = sum(op.duration for op in self.operations.values())
+        total_memory = sum(op.memory_delta for op in self.operations.values())
+        
+        # Executive summary text
+        summary_text = f"""
+EXECUTIVE SUMMARY
+
+Pipeline Execution Status: {'SUCCESSFUL' if success_rate == 100 else 'ISSUES DETECTED'}
+Total Operations Processed: {total_ops}
+Success Rate: {success_rate:.1f}%
+Total Processing Time: {total_duration:.2f} seconds
+Memory Impact: {total_memory:+.1f} MB
+
+KEY FINDINGS:
+{'• All operations completed successfully without errors' if success_rate == 100 else f'• {total_ops - int(total_ops * success_rate / 100)} operations encountered errors'}
+{'• No performance bottlenecks detected' if not self.bottlenecks else f'• {len(self.bottlenecks)} performance bottlenecks identified'}
+{'• Memory usage within acceptable limits' if not self.memory_peaks else f'• {len(self.memory_peaks)} memory usage spikes detected'}
+• Average operation duration: {total_duration/max(total_ops, 1):.3f} seconds
+        """
+        
+        ax_summary.text(0.05, 0.95, summary_text, fontsize=12, color=self.colors['text_primary'],
+                       transform=ax_summary.transAxes, verticalalignment='top',
+                       bbox=dict(boxstyle="round,pad=0.5", facecolor=self.colors['background'], 
+                               alpha=0.8, edgecolor=self.colors['border']))
+        
+        # Performance Trends
+        ax_trends = fig.add_subplot(gs[2, :])
+        
+        if self.operations:
+            sorted_ops = sorted(self.operations.items(), key=lambda x: x[1].start_time)
+            
+            # Create performance trend chart
+            durations = [op.duration for _, op in sorted_ops]
+            memory_usage = [op.memory_delta for _, op in sorted_ops]
+            x_pos = range(len(sorted_ops))
+            
+            # Dual-axis chart
+            ax_trends2 = ax_trends.twinx()
+            
+            # Duration trend
+            line1 = ax_trends.plot(x_pos, durations, color=self.colors['primary'], 
+                                 linewidth=3, marker='o', markersize=6, label='Duration (s)')
+            ax_trends.fill_between(x_pos, durations, alpha=0.3, color=self.colors['primary'])
+            
+            # Memory trend
+            line2 = ax_trends2.plot(x_pos, memory_usage, color=self.colors['accent'], 
+                                  linewidth=3, marker='s', markersize=6, label='Memory Delta (MB)')
+            ax_trends2.fill_between(x_pos, memory_usage, alpha=0.3, color=self.colors['accent'])
+            
+            # Styling
+            ax_trends.set_xlabel('Operation Sequence', fontsize=12, color=self.colors['text_primary'])
+            ax_trends.set_ylabel('Duration (seconds)', fontsize=12, color=self.colors['primary'])
+            ax_trends2.set_ylabel('Memory Delta (MB)', fontsize=12, color=self.colors['accent'])
+            ax_trends.set_title('Performance Trends Analysis', fontsize=14, fontweight='bold', 
+                              color=self.colors['primary'], pad=15)
+            
+            # Combined legend
+            lines = line1 + line2
+            labels = [l.get_label() for l in lines]
+            ax_trends.legend(lines, labels, loc='upper left')
+            
+            ax_trends.grid(True, alpha=0.3)
+            ax_trends.spines['top'].set_visible(False)
+            ax_trends2.spines['top'].set_visible(False)
+        
+        # Error Analysis and Recommendations
+        ax_errors = fig.add_subplot(gs[3, 0])
+        ax_recommendations = fig.add_subplot(gs[3, 1])
+        
+        # Error Analysis
+        ax_errors.axis('off')
+        ax_errors.text(0.05, 0.9, 'Error Analysis', fontsize=14, fontweight='bold',
+                      color=self.colors['danger'], transform=ax_errors.transAxes)
+        
+        errors = [op for op in self.operations.values() if op.error]
+        if errors:
+            error_text = f"Total Errors: {len(errors)}\n\n"
+            for i, op in enumerate(errors[:3]):  # Show top 3 errors
+                error_text += f"{i+1}. {op.operation_name}\n   Error: {op.error[:50]}...\n\n"
         else:
-            plt.savefig(self.save_path / "pipeline_flow.png", dpi=300, bbox_inches='tight')
+            error_text = "✅ No errors detected\nAll operations completed successfully"
         
-        plt.close()
-        console.print("[green]✓ Pipeline visualization saved[/green]")
-    
-    def generate_report(self) -> Dict[str, Any]:
-        """
-        Generate a comprehensive debugging report.
-        """
-        report = {
-            "pipeline_name": self.name,
-            "total_operations": len(self.operations),
-            "total_duration": sum(op.duration for op in self.operations.values()),
-            "total_memory_used": sum(op.memory_delta for op in self.operations.values()),
-            "errors": sum(1 for op in self.operations.values() if op.error),
-            "bottlenecks": len(self.bottlenecks),
-            "timestamp": datetime.now().isoformat()
-        }
+        ax_errors.text(0.05, 0.75, error_text, fontsize=10, color=self.colors['text_primary'],
+                      transform=ax_errors.transAxes, verticalalignment='top',
+                      bbox=dict(boxstyle="round,pad=0.3", facecolor='#FEF2F2', 
+                              alpha=0.8, edgecolor=self.colors['danger']))
         
-        # Operation details
-        report["operations"] = []
-        for op_id in self.operation_order:
-            metrics = self.operations[op_id]
-            report["operations"].append({
-                "id": op_id,
-                "name": metrics.operation_name,
-                "duration": metrics.duration,
-                "memory_delta": metrics.memory_delta,
-                "input_shape": metrics.input_shape,
-                "output_shape": metrics.output_shape,
-                "error": metrics.error,
-                "is_bottleneck": op_id in self.bottlenecks
-            })
+        # Recommendations
+        ax_recommendations.axis('off')
+        ax_recommendations.text(0.05, 0.9, 'Recommendations', fontsize=14, fontweight='bold',
+                               color=self.colors['success'], transform=ax_recommendations.transAxes)
         
-        # Bottleneck analysis
-        if self.bottlenecks:
-            report["bottleneck_operations"] = [
-                {
-                    "id": op_id,
-                    "name": self.operations[op_id].operation_name,
-                    "duration": self.operations[op_id].duration
-                }
-                for op_id in self.bottlenecks
-            ]
+        recommendations = self.suggest_optimizations()
+        if recommendations:
+            rec_text = "Priority Actions:\n\n"
+            for i, rec in enumerate(recommendations[:3]):
+                rec_text += f"{i+1}. {rec['type'].upper()}: {rec['operation']}\n"
+                rec_text += f"   {rec['suggestion']}\n\n"
+        else:
+            rec_text = "✅ Pipeline performing optimally\nNo immediate actions required"
         
-        # Memory peaks
-        if self.memory_peaks:
-            report["memory_peaks"] = [
-                {
-                    "operation": self.operations[op_id].operation_name,
-                    "memory_increase_mb": mem_delta
-                }
-                for op_id, mem_delta in self.memory_peaks
-            ]
+        ax_recommendations.text(0.05, 0.75, rec_text, fontsize=10, color=self.colors['text_primary'],
+                               transform=ax_recommendations.transAxes, verticalalignment='top',
+                               bbox=dict(boxstyle="round,pad=0.3", facecolor='#F0FDF4', 
+                                       alpha=0.8, edgecolor=self.colors['success']))
         
-        return report
-    
+        # Data Quality Metrics
+        ax_quality = fig.add_subplot(gs[4, :])
+        ax_quality.axis('off')
+        
+        ax_quality.text(0.05, 0.9, 'Data Quality & Lineage Summary', fontsize=14, fontweight='bold',
+                       color=self.colors['info'], transform=ax_quality.transAxes)
+        
+        # Data quality metrics
+        lineage_count = len(self.data_lineages)
+        transform_count = sum(len(l.transformations) for l in self.data_lineages.values())
+        
+        quality_metrics = [
+            f"📊 Data Objects Tracked: {lineage_count}",
+            f"🔄 Transformations Applied: {transform_count}",
+            f"📈 Operations with Shape Changes: {sum(1 for l in self.data_lineages.values() if l.column_changes)}",
+            f"⚡ Pipeline Complexity Score: {len(self.operation_order) * (1 + len(self.bottlenecks))}",
+            f"🎯 Data Processing Efficiency: {(success_rate/100) * (1/(max(total_duration, 1)/10)):.2f}"
+        ]
+        
+        quality_text = "\n".join(quality_metrics)
+        ax_quality.text(0.05, 0.7, quality_text, fontsize=12, color=self.colors['text_primary'],
+                       transform=ax_quality.transAxes, verticalalignment='top',
+                       bbox=dict(boxstyle="round,pad=0.5", facecolor='#F0F9FF', 
+                               alpha=0.8, edgecolor=self.colors['info']))
+        
+        # Footer
+        ax_footer = fig.add_subplot(gs[5, :])
+        ax_footer.axis('off')
+        
+        footer_text = f"Generated by DataProbe v2.0 | Pipeline Analytics & Debugging Tool | {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+        ax_footer.text(0.5, 0.5, footer_text, ha='center', va='center', fontsize=10,
+                      color=self.colors['text_secondary'], transform=ax_footer.transAxes,
+                      style='italic')
+        
+        # Save
+        save_file = save_path or (self.save_path / "executive_pipeline_report.png")
+        plt.savefig(save_file, dpi=300, bbox_inches='tight', facecolor='white')
+        plt.show()
+        
+        console.print(f"[green]✓ Executive report saved to: {save_file}[/green]")
+        return str(save_file)
+
     def print_summary(self):
         """
         Print a summary of the pipeline execution.
@@ -579,3 +1110,31 @@ class PipelineDebugger:
                             })
         
         return suggestions
+
+    def generate_report(self) -> Dict[str, Any]:
+        """Generate comprehensive pipeline report"""
+        total_duration = sum(op.duration for op in self.operations.values())
+        total_memory = sum(op.memory_delta for op in self.operations.values())
+        
+        # Find bottlenecks
+        bottlenecks = [
+            op_name for op_name, op_data in self.operations.items()
+            if op_data.duration > total_duration * 0.3
+        ]
+        
+        return {
+            'pipeline_name': self.name,
+            'total_operations': len(self.operations),
+            'total_duration': total_duration,
+            'total_memory_used': total_memory,
+            'bottlenecks': len(bottlenecks),
+            'errors': len([op for op in self.operations.values() if op.error]),
+            'success_rate': (len(self.operations) - len([op for op in self.operations.values() if op.error])) / max(len(self.operations), 1),
+            'operations_detail': {op_id: {
+                'name': op.operation_name,
+                'duration': op.duration,
+                'memory_delta': op.memory_delta,
+                'status': 'error' if op.error else 'success'
+            } for op_id, op in self.operations.items()},
+            'error_detail': {op.operation_name: op.error for op in self.operations.values() if op.error}
+        }

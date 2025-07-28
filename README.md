@@ -2,14 +2,62 @@
 
 # DataProbe
 
-**DataProbe** is a comprehensive Python toolkit for debugging, profiling, and optimizing data pipelines. It provides powerful tools to track data lineage, identify bottlenecks, monitor memory usage, and visualize pipeline execution flow.
+**DataProbe** is a comprehensive Python toolkit for debugging, profiling, and optimizing data pipelines. It provides powerful tools to track data lineage, identify bottlenecks, monitor memory usage, and visualize pipeline execution flow with **enterprise-grade visualizations**.
+
+## 🎨 **NEW: Enterprise-Grade Visualizations**
+
+DataProbe v2.1.0 introduces professional-quality visualizations that rival commercial ETL monitoring tools like Airflow, Prefect, and Dagster.
+
+### **Dashboard Features**
+
+#### 🏢 **Enterprise Dashboard**
+
+- **KPI Panels**: Real-time success rates, duration, memory usage
+- **Pipeline Flowchart**: Interactive operation flow with status indicators
+- **Performance Analytics**: Memory usage timelines with peak detection
+- **Data Insights**: Comprehensive lineage and transformation tracking
+
+```python
+# Generate enterprise dashboard
+debugger.visualize_pipeline()
+```
+
+#### 🌐 **3D Pipeline Network**
+
+- **3D Visualization**: Interactive network showing operation relationships
+- **Performance Mapping**: Z-axis represents operation duration
+- **Status Color-coding**: Visual error and bottleneck identification
+
+```python
+# Create 3D network visualization
+debugger.create_3d_pipeline_visualization()
+```
+
+#### 📊 **Executive Reports**
+
+- **Multi-page Reports**: Professional stakeholder-ready documentation
+- **Performance Trends**: Dual-axis charts showing duration and memory patterns
+- **Optimization Recommendations**: AI-powered suggestions for improvements
+- **Data Quality Metrics**: Comprehensive pipeline health scoring
+
+```python
+# Generate executive report
+debugger.generate_executive_report()
+```
+
+### **Color-Coded Status System**
+
+- 🟢 **Success**: Operations completed without issues
+- 🟡 **Warning**: Performance bottlenecks detected
+- 🔴 **Error**: Failed operations requiring attention
+- 🟦 **Info**: Data flow and transformation indicators
 
 ## 🚀 Features
 
 ### PipelineDebugger
 
 * **🔍 Operation Tracking** : Automatically track execution time, memory usage, and data shapes for each operation
-* **📊 Visual Pipeline Flow** : Generate interactive visualizations of your pipeline execution
+* **📊 Enterprise-Grade Visualizations** : Professional dashboards, 3D networks, and executive reports
 * **💾 Memory Profiling** : Monitor memory usage and identify memory-intensive operations
 * **🔗 Data Lineage** : Track data transformations and column changes throughout the pipeline
 * **⚠️ Bottleneck Detection** : Automatically identify slow operations and memory peaks
@@ -19,13 +67,13 @@
 
 ## 📦 Installation
 
-```
+```bash
 pip install dataprobe
 ```
 
 For development installation:
 
-```
+```bash
 git clone https://github.com/santhoshkrishnan30/dataprobe.git
 cd dataprobe
 pip install -e ".[dev]"
@@ -33,13 +81,13 @@ pip install -e ".[dev]"
 
 ## 🎯 Quick Start
 
-### Basic Usage
+### Basic Usage with Enhanced Visualizations
 
-```
+```python
 from dataprobe import PipelineDebugger
 import pandas as pd
 
-# Initialize the debugger
+# Initialize the debugger with enhanced features
 debugger = PipelineDebugger(
     name="My_ETL_Pipeline",
     track_memory=True,
@@ -60,15 +108,24 @@ def transform_data(df):
 df = load_data("data.csv")
 df = transform_data(df)
 
-# Generate reports and visualizations
+# Generate enterprise-grade visualizations
+debugger.visualize_pipeline()              # Enterprise dashboard
+debugger.create_3d_pipeline_visualization() # 3D network view  
+debugger.generate_executive_report()       # Executive report
+
+# Get AI-powered optimization suggestions
+suggestions = debugger.suggest_optimizations()
+for suggestion in suggestions:
+    print(f"💡 {suggestion['suggestion']}")
+
+# Print summary and reports
 debugger.print_summary()
-debugger.visualize_pipeline()
 report = debugger.generate_report()
 ```
 
 ### Memory Profiling
 
-```
+```python
 @debugger.profile_memory
 def memory_intensive_operation():
     large_df = pd.DataFrame(np.random.randn(1000000, 50))
@@ -78,12 +135,16 @@ def memory_intensive_operation():
 
 ### DataFrame Analysis
 
-```
+```python
 # Analyze DataFrames for potential issues
 debugger.analyze_dataframe(df, name="Sales Data")
 ```
 
 ## 📊 Example Output
+
+### Enterprise Dashboard
+
+Professional KPI dashboard with real-time metrics, pipeline flowchart, memory analytics, and performance insights.
 
 ### Pipeline Summary
 
@@ -102,24 +163,41 @@ Pipeline Summary: My_ETL_Pipeline
 ### Optimization Suggestions
 
 ```
-- [PERFORMANCE] Transform Data: Operation took 1.52s
-  Suggestion: Consider optimizing this operation or parallelizing if possible
+💡 OPTIMIZATION RECOMMENDATIONS:
 
-- [MEMORY] Load Large Dataset: High memory usage: +85.3MB
-  Suggestion: Consider processing data in chunks or optimizing memory usage
+1. [PERFORMANCE] Transform Data
+   Issue: Operation took 1.52s
+   💡 Consider optimizing this operation or parallelizing if possible
+
+2. [MEMORY] Load Large Dataset  
+   Issue: High memory usage: +85.3MB
+   💡 Consider processing data in chunks or optimizing memory usage
 ```
 
 ## 🔧 Advanced Features
 
+### Multiple Visualization Options
+
+```python
+# Enterprise dashboard - Professional KPI dashboard
+debugger.visualize_pipeline()
+
+# 3D network visualization - Interactive operation relationships  
+debugger.create_3d_pipeline_visualization()
+
+# Executive report - Multi-page stakeholder documentation
+debugger.generate_executive_report()
+```
+
 ### Data Lineage Tracking
 
-```
+```python
 # Export data lineage information
 lineage_json = debugger.export_lineage(format="json")
 
 # Track column changes automatically
 @debugger.track_operation("Add Features")
-defadd_features(df):
+def add_features(df):
     df['feature_1'] = df['value'].rolling(7).mean()
     df['feature_2'] = df['value'].shift(1)
     return df
@@ -127,16 +205,16 @@ defadd_features(df):
 
 ### Custom Metadata
 
-```
+```python
 @debugger.track_operation("Process Batch", batch_id=123, source="api")
-defprocess_batch(data):
+def process_batch(data):
     # Operation metadata is stored and included in reports
     return processed_data
 ```
 
 ### Checkpoint Saving
 
-```
+```python
 # Auto-save is enabled by default
 debugger = PipelineDebugger(name="Pipeline", auto_save=True)
 
@@ -148,16 +226,25 @@ debugger.save_checkpoint()
 
 1. **Use with Context** : The debugger adds minimal overhead, but for production pipelines, you can disable tracking:
 
-```
+```python
    debugger = PipelineDebugger(name="Pipeline", track_memory=False, track_lineage=False)
 ```
 
-1. **Batch Operations** : Group small operations together to reduce tracking overhead
-2. **Memory Monitoring** : Set appropriate memory thresholds to catch issues early:
+2. **Batch Operations** : Group small operations together to reduce tracking overhead
+3. **Memory Monitoring** : Set appropriate memory thresholds to catch issues early:
 
-```
+```python
    debugger = PipelineDebugger(name="Pipeline", memory_threshold_mb=500)
 ```
+
+## 💼 **Enterprise Features**
+
+✅ **Professional Styling**: Modern design matching enterprise standards
+✅ **Executive Ready**: Suitable for stakeholder presentations
+✅ **Performance Insights**: AI-powered optimization recommendations
+✅ **Export Options**: High-resolution PNG outputs
+✅ **Responsive Design**: Scales from detailed debugging to executive overview
+✅ **Real-time Metrics**: Live performance and memory tracking
 
 ## 🤝 Contributing
 
@@ -177,6 +264,7 @@ This project is licensed under the MIT License - see the [LICENSE](https://githu
 
 * Built with [Rich](https://github.com/Textualize/rich) for beautiful terminal output
 * Uses [NetworkX](https://networkx.org/) for pipeline visualization
+* Enhanced with [Matplotlib](https://matplotlib.org/) and [Seaborn](https://seaborn.pydata.org/) for enterprise-grade visualizations
 * Inspired by the need for better data pipeline debugging tools
 
 ## 📞 Support
@@ -187,6 +275,9 @@ This project is licensed under the MIT License - see the [LICENSE](https://githu
 
 ## 🗺️ Roadmap
 
+* [X] Enterprise-grade dashboard visualizations
+* [X] 3D pipeline network views
+* [X] Executive-level reporting capabilities
 * [ ] Support for distributed pipeline debugging
 * [ ] Integration with popular orchestration tools (Airflow, Prefect, Dagster)
 * [ ] Real-time pipeline monitoring dashboard

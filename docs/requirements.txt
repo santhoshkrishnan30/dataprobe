@@ -1,2 +1,23 @@
 ﻿sphinx>=4.0.0
 sphinx-rtd-theme>=1.0.0
+# Core dependencies
+pandas>=1.3.0
+polars>=0.18.0
+numpy>=1.21.0
+psutil>=5.8.0
+
+# Enhanced visualization dependencies
+matplotlib>=3.5.0
+seaborn>=0.11.0
+networkx>=2.8.0
+
+# Rich console output
+rich>=12.0.0
+
+# Data handling
+openpyxl>=3.0.9
+xlrd>=2.0.1
+
+# Optional dependencies for advanced features
+scikit-learn>=1.0.0
+plotly>=5.0.0

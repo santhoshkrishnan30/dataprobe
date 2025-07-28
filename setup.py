@@ -11,7 +11,7 @@ long_description = (this_directory / "README.md").read_text(encoding='utf-8')
 
 setup(
     name="dataprobe",
-    version="0.1.5",
+    version="2.1.0",
     author="SANTHOSH KRISHNAN R",
     author_email="santhoshkrishnan3006@gmail.com",
     description="Advanced data pipeline debugging and profiling tools for Python",

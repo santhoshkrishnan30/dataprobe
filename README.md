@@ -273,17 +273,10 @@ This project is licensed under the MIT License - see the [LICENSE](https://githu
 * 🐛 Issues: [GitHub Issues](https://github.com/santhoshkrishnan30/dataprobe/issues)
 * 📖 Documentation: [Read the Docs](https://dataprobe.readthedocs.io/)
 
-## 🗺️ Roadmap
 
-* [X] Enterprise-grade dashboard visualizations
-* [X] 3D pipeline network views
-* [X] Executive-level reporting capabilities
-* [ ] Support for distributed pipeline debugging
-* [ ] Integration with popular orchestration tools (Airflow, Prefect, Dagster)
-* [ ] Real-time pipeline monitoring dashboard
-* [ ] Advanced anomaly detection in data flow
-* [ ] Support for streaming data pipelines
 
 ---
+
+⭐ Star this repository if DataProbe helped you!
 
 Made with ❤️ by Santhosh Krishnan R
